@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import Logo from "@/components/ui/logo";
+import Logo from "@/components/ui/Logo"; // Fixed import path with correct casing
 import { useToast } from "@/components/ui/use-toast";
 
 const SignupPage = () => {
