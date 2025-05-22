@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				brand: {
+					50: "#f0f5ff",
+					100: "#e0ebff",
+					200: "#c1d7ff",
+					300: "#92b8ff",
+					400: "#598fff",
+					500: "#3366ff",
+					600: "#1d45f5",
+					700: "#1835e0",
+					800: "#192db6",
+					900: "#1b2c8f",
+					950: "#141b51",
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,12 +98,30 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				'pulse-light': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' },
+				},
+				'wave': {
+					'0%': { transform: 'scaleY(0.5)' },
+					'50%': { transform: 'scaleY(1.0)' },
+					'100%': { transform: 'scaleY(0.5)' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-light': 'pulse-light 2s ease-in-out infinite',
+				'wave-1': 'wave 1.2s linear infinite',
+				'wave-2': 'wave 1.2s linear infinite 0.2s',
+				'wave-3': 'wave 1.2s linear infinite 0.4s',
+				'wave-4': 'wave 1.2s linear infinite 0.6s',
+				'wave-5': 'wave 1.2s linear infinite 0.8s',
+			},
+			fontFamily: {
+				sans: ['Inter var', 'Inter', 'sans-serif'],
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
