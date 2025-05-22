@@ -17,6 +17,9 @@ import InterviewsPage from "./pages/Interviews/InterviewsPage";
 import NewInterviewPage from "./pages/Interviews/NewInterviewPage";
 import InterviewSessionPage from "./pages/Interviews/InterviewSessionPage";
 import FeedbackPage from "./pages/Interviews/FeedbackPage";
+import ResumePage from "./pages/Resume/ResumePage";
+import ResumeBuilderPage from "./pages/Resume/ResumeBuilderPage";
+import ResumeTailorPage from "./pages/Resume/ResumeTailorPage";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +44,9 @@ const App = () => (
             <Route path="/interviews/new" element={<NewInterviewPage />} />
             <Route path="/interviews/session" element={<InterviewSessionPage />} />
             <Route path="/interviews/feedback" element={<FeedbackPage />} />
+            <Route path="/resume" element={<ResumePage />} />
+            <Route path="/resume/builder" element={<ResumeBuilderPage />} />
+            <Route path="/resume/tailor" element={<ResumeTailorPage />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
 
