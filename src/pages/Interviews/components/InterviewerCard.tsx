@@ -1,5 +1,5 @@
 
-import { User } from "lucide-react";
+import UserAvatar from "@/components/ui/user-avatar";
 
 interface InterviewerCardProps {
   id: string;
@@ -20,9 +20,7 @@ const InterviewerCard = ({ id, name, gender, isSelected, onSelect }: Interviewer
       onClick={() => onSelect(id)}
     >
       <div className="flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3">
-          <User className="h-8 w-8 text-muted-foreground" />
-        </div>
+        <UserAvatar name={name} size="lg" className="mb-3" />
         <p className="font-medium">{name}</p>
         <p className="text-xs text-muted-foreground">
           {gender === "male" ? "Male Voice" : "Female Voice"}
