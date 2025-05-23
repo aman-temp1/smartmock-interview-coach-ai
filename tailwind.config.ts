@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -108,6 +107,26 @@ export default {
 					'50%': { transform: 'scaleY(1.0)' },
 					'100%': { transform: 'scaleY(0.5)' },
 				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'scale-in': {
+					'0%': {
+						transform: 'scale(0.95)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -118,6 +137,8 @@ export default {
 				'wave-3': 'wave 1.2s linear infinite 0.4s',
 				'wave-4': 'wave 1.2s linear infinite 0.6s',
 				'wave-5': 'wave 1.2s linear infinite 0.8s',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'scale-in': 'scale-in 0.2s ease-out',
 			},
 			fontFamily: {
 				sans: ['Inter var', 'Inter', 'sans-serif'],

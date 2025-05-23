@@ -1,7 +1,7 @@
 
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Calendar, Settings, User } from "lucide-react";
+import { Calendar, Settings, User, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "../ui/Logo";
 
@@ -44,6 +44,12 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
               collapsed={collapsed}
             />
             <NavItem
+              to="/resume"
+              icon={<FileText className="h-5 w-5" />}
+              label="Resume"
+              collapsed={collapsed}
+            />
+            <NavItem
               to="/settings"
               icon={<Settings className="h-5 w-5" />}
               label="Settings"
@@ -56,13 +62,13 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-start"
+            className="w-full justify-start transition-all duration-200 hover:scale-105"
             onClick={toggleSidebar}
           >
             {collapsed ? (
-              <span>→</span>
+              <span className="animate-fade-in">→</span>
             ) : (
-              <span className="flex items-center">
+              <span className="flex items-center animate-fade-in">
                 <span className="mr-2">←</span>
                 <span>Collapse</span>
               </span>
@@ -83,22 +89,22 @@ interface NavItemProps {
 
 const NavItem = ({ to, icon, label, collapsed }: NavItemProps) => {
   return (
-    <li>
+    <li className="animate-fade-in">
       <NavLink
         to={to}
         className={({ isActive }) =>
           cn(
-            "flex items-center p-2 rounded-md transition-colors",
-            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            "flex items-center p-2 rounded-md transition-all duration-200",
+            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:scale-105",
             isActive
-              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium animate-scale-in"
               : "text-sidebar-foreground",
             collapsed ? "justify-center" : "justify-start"
           )
         }
       >
-        <span className="flex-shrink-0">{icon}</span>
-        {!collapsed && <span className="ml-3">{label}</span>}
+        <span className="flex-shrink-0 transition-transform duration-200">{icon}</span>
+        {!collapsed && <span className="ml-3 animate-fade-in">{label}</span>}
       </NavLink>
     </li>
   );
