@@ -1,20 +1,18 @@
 
 import { Outlet } from "react-router-dom";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "../navigation/AppSidebar";
+import Sidebar from "../navigation/Sidebar";
+import { useState } from "react";
 
 const MainLayout = () => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+
   return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <SidebarInset>
-          <main className="flex-1 p-0 transition-all duration-300 overflow-hidden">
-            <Outlet />
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen flex flex-col md:flex-row bg-background">
+      <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      <main className="flex-1 p-0 transition-all duration-300 overflow-hidden">
+        <Outlet />
+      </main>
+    </div>
   );
 };
 
