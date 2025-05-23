@@ -18,14 +18,14 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   return (
     <aside
       className={cn(
-        "h-screen bg-sidebar border-r border-border flex-shrink-0 transition-all duration-300 overflow-hidden sticky top-0 z-30",
+        "h-screen bg-sidebar border-r border-border flex-shrink-0 transition-all duration-300 overflow-hidden sticky top-0 z-30 animate-fade-in",
         collapsed ? "w-[70px]" : "w-[240px]"
       )}
       onMouseEnter={() => setCollapsed(false)}
       onMouseLeave={() => setCollapsed(true)}
     >
       <div className="flex flex-col h-full">
-        <div className="p-4 flex items-center justify-center h-16 border-b border-border">
+        <div className="p-4 flex items-center justify-center h-16 border-b border-border animate-scale-in">
           <Logo collapsed={collapsed} />
         </div>
 
@@ -62,7 +62,7 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-start transition-all duration-200 hover:scale-105"
+            className="w-full justify-start transition-all duration-200 hover:scale-105 animate-fade-in"
             onClick={toggleSidebar}
           >
             {collapsed ? (
@@ -103,7 +103,7 @@ const NavItem = ({ to, icon, label, collapsed }: NavItemProps) => {
           )
         }
       >
-        <span className="flex-shrink-0 transition-transform duration-200">{icon}</span>
+        <span className="flex-shrink-0 transition-transform duration-200 hover:scale-110">{icon}</span>
         {!collapsed && <span className="ml-3 animate-fade-in">{label}</span>}
       </NavLink>
     </li>
