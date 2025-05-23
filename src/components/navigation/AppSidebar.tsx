@@ -34,6 +34,8 @@ export function AppSidebar() {
     return currentPath.startsWith(path);
   };
 
+  const isExpanded = navItems.some((item) => isActive(item.url));
+
   return (
     <Sidebar collapsible="icon" className="transition-all duration-300">
       <SidebarHeader className="border-b border-border">
@@ -44,7 +46,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup open={isExpanded}>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
