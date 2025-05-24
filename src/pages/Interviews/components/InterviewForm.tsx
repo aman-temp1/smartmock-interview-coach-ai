@@ -21,6 +21,8 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
   
   const [interviewType, setInterviewType] = useState(initialInterviewType);
   const [position, setPosition] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [companyDescription, setCompanyDescription] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
   const [duration, setDuration] = useState("30");
@@ -79,6 +81,8 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
     console.log("Starting interview with:", {
       interviewType,
       position,
+      companyName,
+      companyDescription,
       jobDescription,
       experienceLevel,
       duration,
@@ -123,6 +127,16 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormField label="Company Name" htmlFor="company-name">
+          <Input
+            id="company-name"
+            placeholder="e.g. Google, Microsoft, Startup Inc."
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            className="transition-all duration-200 hover:border-brand-200 focus:scale-[1.01]"
+          />
+        </FormField>
+
         <FormField label="Experience Level" htmlFor="experience-level" required>
           <Select value={experienceLevel} onValueChange={setExperienceLevel}>
             <SelectTrigger id="experience-level" className="transition-all duration-200 hover:border-brand-200">
@@ -137,7 +151,22 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
             </SelectContent>
           </Select>
         </FormField>
+      </div>
 
+      <FormField label="Company Description" htmlFor="company-description">
+        <Textarea
+          id="company-description"
+          placeholder="Brief description of the company, its mission, products, or culture..."
+          className="min-h-[80px] transition-all duration-200 hover:border-brand-200 focus:scale-[1.01]"
+          value={companyDescription}
+          onChange={(e) => setCompanyDescription(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground mt-1 transition-colors duration-200">
+          Adding company details helps the interviewer ask questions about company fit and culture.
+        </p>
+      </FormField>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField label="Interview Duration" htmlFor="duration">
           <Select value={duration} onValueChange={setDuration}>
             <SelectTrigger id="duration" className="transition-all duration-200 hover:border-brand-200">
