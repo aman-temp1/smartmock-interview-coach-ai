@@ -81,11 +81,11 @@ const App = () => (
 
             <Route path="/settings" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Settings />
-                </MainLayout>
+                <MainLayout />
               </ProtectedRoute>
-            } />
+            }>
+              <Route index element={<Settings />} />
+            </Route>
 
             {/* Catch-all route - redirect to landing for unauthenticated users */}
             <Route path="*" element={<Navigate to="/landing" replace />} />
