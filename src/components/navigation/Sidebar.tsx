@@ -1,9 +1,9 @@
-
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Calendar, Settings, User, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "../ui/Logo";
+import UserMenu from "./UserMenu";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -58,7 +58,9 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
           </ul>
         </nav>
 
-        <div className="mt-auto p-4 border-t border-border">
+        <div className="p-4 border-t border-border space-y-3">
+          <UserMenu collapsed={collapsed} />
+          
           <Button
             variant="outline"
             size="sm"
