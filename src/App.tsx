@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -13,6 +13,8 @@ import MainLayout from "./components/layouts/MainLayout";
 // Pages
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/Auth/AuthPage";
+import LoginPage from "./pages/Auth/LoginPage";
+import SignupPage from "./pages/Auth/SignupPage";
 import Dashboard from "./pages/Dashboard";
 import InterviewsPage from "./pages/Interviews/InterviewsPage";
 import NewInterviewPage from "./pages/Interviews/NewInterviewPage";
@@ -37,26 +39,56 @@ const App = () => (
             {/* Public routes */}
             <Route path="/landing" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+
+            {/* Root redirect - redirect to landing for unauthenticated users, dashboard for authenticated */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Navigate to="/dashboard" replace />
+              </ProtectedRoute>
+            } />
 
             {/* Protected routes */}
-            <Route path="/" element={
+            <Route path="/dashboard" element={
               <ProtectedRoute>
                 <MainLayout />
               </ProtectedRoute>
             }>
               <Route index element={<Dashboard />} />
-              <Route path="/interviews" element={<InterviewsPage />} />
-              <Route path="/interviews/new" element={<NewInterviewPage />} />
-              <Route path="/interviews/session" element={<InterviewSessionPage />} />
-              <Route path="/interviews/feedback" element={<FeedbackPage />} />
-              <Route path="/resume" element={<ResumePage />} />
-              <Route path="/resume/builder" element={<ResumeBuilderPage />} />
-              <Route path="/resume/tailor" element={<ResumeTailorPage />} />
-              <Route path="/settings" element={<Settings />} />
             </Route>
 
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="/interviews" element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<InterviewsPage />} />
+              <Route path="new" element={<NewInterviewPage />} />
+              <Route path="session" element={<InterviewSessionPage />} />
+              <Route path="feedback" element={<FeedbackPage />} />
+            </Route>
+
+            <Route path="/resume" element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<ResumePage />} />
+              <Route path="builder" element={<ResumeBuilderPage />} />
+              <Route path="tailor" element={<ResumeTailorPage />} />
+            </Route>
+
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Settings />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Catch-all route - redirect to landing for unauthenticated users */}
+            <Route path="*" element={<Navigate to="/landing" replace />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

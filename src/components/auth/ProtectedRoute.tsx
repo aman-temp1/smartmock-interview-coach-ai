@@ -1,6 +1,6 @@
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -8,6 +8,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -18,6 +19,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!user) {
+    // If user is trying to access root, redirect to landing
+    if (location.pathname === '/') {
+      return <Navigate to="/landing" replace />
+    }
+    // For all other protected routes, redirect to auth
     return <Navigate to="/auth" replace />
   }
 
