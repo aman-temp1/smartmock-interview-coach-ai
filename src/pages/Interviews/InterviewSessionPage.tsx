@@ -1,10 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAudioStreaming } from "@/hooks/useAudioStreaming";
+import AudioVisualization from "@/components/AudioVisualization";
+import { Volume2, VolumeX } from "lucide-react";
 
 const InterviewSessionPage = () => {
   const navigate = useNavigate();
@@ -13,7 +15,22 @@ const InterviewSessionPage = () => {
   const [transcript, setTranscript] = useState("");
   const [question, setQuestion] = useState("Tell me about yourself and your experience.");
   const [timer, setTimer] = useState(30 * 60); // 30 minutes in seconds
-  const [audioAnimation, setAudioAnimation] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
+  // Audio streaming
+  const { isPlaying, isLoading, error, generateSpeech, stopAudio } = useAudioStreaming();
+  const [selectedVoice, setSelectedVoice] = useState(() => 
+    localStorage.getItem('interview-voice') || 'zephyr'
+  );
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+
+  const questions = [
+    "Tell me about yourself and your experience.",
+    "What are your greatest strengths and how do they relate to this position?",
+    "Describe a challenging project you worked on and how you handled it.",
+    "Why are you interested in this role and our company?",
+    "Where do you see yourself in 5 years?"
+  ];
 
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
@@ -40,6 +57,13 @@ const InterviewSessionPage = () => {
     return () => clearInterval(interval);
   }, [timer, toast, navigate]);
 
+  // Generate speech for new questions
+  useEffect(() => {
+    if (isAudioEnabled && question && !isListening) {
+      generateSpeech(question, selectedVoice).catch(console.error);
+    }
+  }, [question, selectedVoice, isAudioEnabled, generateSpeech, isListening]);
+
   // Simulate microphone access
   const requestMicrophoneAccess = () => {
     toast({
@@ -50,30 +74,36 @@ const InterviewSessionPage = () => {
     // Simulate a microphone access delay
     setTimeout(() => {
       setIsListening(true);
-      setAudioAnimation(true);
       
-      // Simulate new questions after delays
-      setTimeout(() => {
-        setAudioAnimation(false);
-        setTranscript("");
-        setQuestion("What are your greatest strengths and how do they relate to this position?");
-      }, 15000);
-      
-      setTimeout(() => {
-        setAudioAnimation(false);
-        setTranscript("");
-        setQuestion("Describe a challenging project you worked on and how you handled it.");
-      }, 35000);
+      // Move to next question after delays
+      const questionTimers = [15000, 35000, 55000, 75000];
+      questionTimers.forEach((delay, index) => {
+        setTimeout(() => {
+          if (index + 1 < questions.length) {
+            setCurrentQuestionIndex(index + 1);
+            setQuestion(questions[index + 1]);
+            setTranscript("");
+          }
+        }, delay);
+      });
     }, 1500);
   };
 
   // Handle stopping the interview
   const handleEndInterview = () => {
+    stopAudio();
     toast({
       title: "Interview Ended",
       description: "Your interview has been ended and your performance will be analyzed.",
     });
     navigate("/interviews/feedback");
+  };
+
+  const toggleAudio = () => {
+    if (isAudioEnabled && isPlaying) {
+      stopAudio();
+    }
+    setIsAudioEnabled(!isAudioEnabled);
   };
 
   return (
@@ -84,6 +114,15 @@ const InterviewSessionPage = () => {
           <p className="text-sm text-muted-foreground">Frontend Developer Position</p>
         </div>
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleAudio}
+            className="flex items-center gap-2"
+          >
+            {isAudioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            {isAudioEnabled ? 'Audio On' : 'Audio Off'}
+          </Button>
           <div className="bg-background border border-border rounded-md px-3 py-1">
             <span className="text-sm font-medium">{formatTime(timer)}</span>
           </div>
@@ -104,16 +143,25 @@ const InterviewSessionPage = () => {
                 <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-brand-700 font-medium">AI</span>
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-lg font-medium mb-2">{question}</p>
                   
-                  {audioAnimation && (
-                    <div className="flex items-end h-8 space-x-1 mt-2">
-                      <div className="wave-bar h-3 animate-wave-1"></div>
-                      <div className="wave-bar h-5 animate-wave-2"></div>
-                      <div className="wave-bar h-7 animate-wave-3"></div>
-                      <div className="wave-bar h-4 animate-wave-4"></div>
-                      <div className="wave-bar h-6 animate-wave-5"></div>
+                  {isAudioEnabled && (
+                    <div className="mt-3">
+                      {isLoading && (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500"></div>
+                          <span className="text-sm text-muted-foreground">Generating speech...</span>
+                        </div>
+                      )}
+                      {!isLoading && (
+                        <AudioVisualization isPlaying={isPlaying} voice={selectedVoice} />
+                      )}
+                      {error && (
+                        <div className="text-sm text-destructive">
+                          Audio error: {error}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

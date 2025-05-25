@@ -1,4 +1,3 @@
-
 import { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, FileText, X } from "lucide-react";
 import FormField from "./FormField";
 import InterviewerSelection from "./InterviewerSelection";
+import VoiceSelection from "./VoiceSelection";
 import { interviewTypes, interviewers, experienceLevels } from "../data/interviewData";
 
 interface InterviewFormProps {
@@ -27,6 +27,7 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
   const [experienceLevel, setExperienceLevel] = useState("");
   const [duration, setDuration] = useState("30");
   const [interviewer, setInterviewer] = useState("");
+  const [selectedVoice, setSelectedVoice] = useState("zephyr");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,9 +88,13 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
       experienceLevel,
       duration,
       interviewer,
+      selectedVoice,
       resumeFile: resumeFile?.name
     });
 
+    // Store voice preference for the session
+    localStorage.setItem('interview-voice', selectedVoice);
+    
     navigate("/interviews/session");
   };
 
@@ -180,6 +185,11 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
             </SelectContent>
           </Select>
         </FormField>
+
+        <VoiceSelection 
+          selectedVoice={selectedVoice}
+          onVoiceChange={setSelectedVoice}
+        />
       </div>
 
       <FormField label="Job Description" htmlFor="job-description">
