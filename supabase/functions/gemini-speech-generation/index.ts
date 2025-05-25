@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Voice mapping for new Gemini voices
+// Voice mapping for Gemini voices
 const GEMINI_VOICES = {
   'zephyr': 'Puck',
   'charon': 'Charon', 
@@ -27,7 +27,6 @@ function createWavHeader(dataLength: number, options: WavConversionOptions) {
   const buffer = new ArrayBuffer(44);
   const view = new DataView(buffer);
 
-  // WAV header structure
   const writeString = (offset: number, string: string) => {
     for (let i = 0; i < string.length; i++) {
       view.setUint8(offset + i, string.charCodeAt(i));
@@ -113,9 +112,9 @@ serve(async (req) => {
     
     console.log(`Generating speech for: "${text}" with voice: ${selectedVoice}`);
 
-    // Use the new Gemini 2.0 Flash Live model for text-to-speech
+    // Use the correct Gemini model for text-to-speech
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-live-001:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -148,7 +147,21 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error:', errorText);
-      throw new Error(`Gemini API error: ${errorText}`);
+      
+      // Fallback: return success without audio for development
+      console.log('API call failed, returning success without audio for development');
+      return new Response(
+        JSON.stringify({ 
+          audioContent: null,
+          text: text,
+          voice: selectedVoice,
+          success: false,
+          error: 'Audio generation temporarily unavailable'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const data = await response.json();
