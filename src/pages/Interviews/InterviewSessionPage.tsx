@@ -141,7 +141,7 @@ const InterviewSessionPage = () => {
           <Card className="mb-6">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
                   <div><img src={logo} alt="Company Logo" className="h-full w-full" /></div>
                 </div>
                 <div className="flex-1">
