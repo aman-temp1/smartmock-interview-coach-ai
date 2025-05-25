@@ -14,10 +14,10 @@ export interface AudioContextType {
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const GEMINI_VOICES = [
-  { id: 'zephyr', name: 'Zephyr (Bright, Female)', gender: 'female' },
-  { id: 'charon', name: 'Charon (Informative, Male)', gender: 'male' },
-  { id: 'kore', name: 'Kore (Firm, Female)', gender: 'female' },
-  { id: 'zubenelgenubi', name: 'Zubenelgenubi (Casual, Male)', gender: 'male' }
+  { id: 'zephyr', name: 'Puck (Bright, Energetic)', gender: 'neutral' },
+  { id: 'charon', name: 'Charon (Deep, Authoritative)', gender: 'male' },
+  { id: 'kore', name: 'Kore (Clear, Professional)', gender: 'female' },
+  { id: 'zubenelgenubi', name: 'Aoede (Warm, Friendly)', gender: 'female' }
 ];
 
 export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

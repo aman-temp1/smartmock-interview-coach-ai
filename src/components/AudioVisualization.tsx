@@ -15,6 +15,17 @@ const AudioVisualization = ({ isPlaying, voice = 'zephyr' }: AudioVisualizationP
     }
   }, [isPlaying]);
 
+  // Map internal voice IDs to display names
+  const getVoiceDisplayName = (voiceId: string) => {
+    const voiceMap = {
+      'zephyr': 'Puck',
+      'charon': 'Charon',
+      'kore': 'Kore',
+      'zubenelgenubi': 'Aoede'
+    };
+    return voiceMap[voiceId] || voiceId;
+  };
+
   if (!isPlaying) {
     return (
       <div className="flex items-center space-x-1">
@@ -45,7 +56,7 @@ const AudioVisualization = ({ isPlaying, voice = 'zephyr' }: AudioVisualizationP
         ))}
       </div>
       <span className="text-sm text-brand-600 font-medium">
-        Speaking with {voice} voice...
+        Speaking with {getVoiceDisplayName(voice)} voice...
       </span>
     </div>
   );
