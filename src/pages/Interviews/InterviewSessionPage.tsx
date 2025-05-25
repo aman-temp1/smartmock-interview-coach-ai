@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAudioStreaming } from "@/hooks/useAudioStreaming";
 import AudioVisualization from "@/components/AudioVisualization";
 import { Volume2, VolumeX } from "lucide-react";
+import logo from "@/assets/images/logo.webp";
 
 const InterviewSessionPage = () => {
   const navigate = useNavigate();
@@ -141,7 +142,7 @@ const InterviewSessionPage = () => {
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-brand-700 font-medium">AI</span>
+                  <div><img src={logo} alt="Company Logo" className="h-full w-full" /></div>
                 </div>
                 <div className="flex-1">
                   <p className="text-lg font-medium mb-2">{question}</p>
