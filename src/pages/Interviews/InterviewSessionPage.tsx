@@ -14,7 +14,7 @@ const InterviewSessionPage = () => {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [question, setQuestion] = useState("Tell me about yourself and your experience.");
+  const [question, setQuestion] = useState("");
   const [timer, setTimer] = useState(30 * 60); // 30 minutes in seconds
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   
@@ -25,13 +25,33 @@ const InterviewSessionPage = () => {
   );
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
-  const questions = [
-    "Tell me about yourself and your experience.",
-    "What are your greatest strengths and how do they relate to this position?",
-    "Describe a challenging project you worked on and how you handled it.",
-    "Why are you interested in this role and our company?",
-    "Where do you see yourself in 5 years?"
-  ];
+  // Get interview configuration
+  const [interviewConfig, setInterviewConfig] = useState<any>(null);
+
+  useEffect(() => {
+    // Load interview configuration and prompt
+    const storedConfig = localStorage.getItem('interview-config');
+    const storedPrompt = localStorage.getItem('interview-prompt');
+    
+    if (storedConfig) {
+      setInterviewConfig(JSON.parse(storedConfig));
+    }
+    
+    if (storedPrompt) {
+      // Set initial question as introduction from the prompt
+      setQuestion("Hello! I'm excited to interview you today. Let me introduce myself and then I'd like you to tell me about yourself and your background.");
+    } else {
+      // Fallback if no stored prompt
+      setQuestion("Hello! Welcome to your interview session. Please tell me about yourself and your experience.");
+    }
+  }, []);
+
+  // Set timer based on configured duration
+  useEffect(() => {
+    if (interviewConfig?.duration) {
+      setTimer(parseInt(interviewConfig.duration) * 60);
+    }
+  }, [interviewConfig]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
@@ -76,13 +96,20 @@ const InterviewSessionPage = () => {
     setTimeout(() => {
       setIsListening(true);
       
-      // Move to next question after delays
+      // Simulate interview progression with more realistic questions
       const questionTimers = [15000, 35000, 55000, 75000];
+      const followUpQuestions = [
+        "That's great! Can you tell me about a challenging project you worked on recently?",
+        "How do you handle working under pressure or tight deadlines?",
+        "What interests you most about this role and our company?",
+        "Do you have any questions for me about the position or our team?"
+      ];
+      
       questionTimers.forEach((delay, index) => {
         setTimeout(() => {
-          if (index + 1 < questions.length) {
+          if (index < followUpQuestions.length) {
             setCurrentQuestionIndex(index + 1);
-            setQuestion(questions[index + 1]);
+            setQuestion(followUpQuestions[index]);
             setTranscript("");
           }
         }, delay);
@@ -111,8 +138,17 @@ const InterviewSessionPage = () => {
     <div className="flex flex-col h-screen bg-muted/30">
       <div className="bg-background p-4 border-b border-border flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">General Interview</h1>
-          <p className="text-sm text-muted-foreground">Frontend Developer Position</p>
+          <h1 className="text-xl font-bold">
+            {interviewConfig?.interviewType ? 
+              `${interviewConfig.interviewType.charAt(0).toUpperCase() + interviewConfig.interviewType.slice(1)} Interview` : 
+              'Interview Session'
+            }
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {interviewConfig?.position || 'Position'} 
+            {interviewConfig?.companyName && ` at ${interviewConfig.companyName}`}
+            {interviewConfig?.interviewer && ` • Interviewer: ${interviewConfig.interviewer}`}
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <Button

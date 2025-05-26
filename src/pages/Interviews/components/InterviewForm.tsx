@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, FileText, X } from "lucide-react";
 import FormField from "./FormField";
 import InterviewerSelection from "./InterviewerSelection";
-import VoiceSelection from "./VoiceSelection";
-import { interviewTypes, interviewers, experienceLevels } from "../data/interviewData";
+import { interviewTypes, interviewers, experienceLevels, getInterviewPrompt } from "../data/interviewData";
 
 interface InterviewFormProps {
   initialInterviewType?: string;
@@ -77,23 +76,28 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
       return;
     }
 
-    // In a real app, this would create an interview session in the backend
-    // and upload the resume if provided
-    console.log("Starting interview with:", {
+    const selectedInterviewer = interviewers.find(i => i.id === interviewer);
+    const interviewPrompt = getInterviewPrompt(
       interviewType,
       position,
+      experienceLevel,
       companyName,
       companyDescription,
       jobDescription,
+      selectedInterviewer
+    );
+
+    // Store interview configuration for the session
+    localStorage.setItem('interview-voice', selectedVoice);
+    localStorage.setItem('interview-prompt', interviewPrompt);
+    localStorage.setItem('interview-config', JSON.stringify({
+      interviewType,
+      position,
+      companyName,
       experienceLevel,
       duration,
-      interviewer,
-      selectedVoice,
-      resumeFile: resumeFile?.name
-    });
-
-    // Store voice preference for the session
-    localStorage.setItem('interview-voice', selectedVoice);
+      interviewer: selectedInterviewer?.name
+    }));
     
     navigate("/interviews/session");
   };
@@ -171,26 +175,19 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
         </p>
       </FormField>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormField label="Interview Duration" htmlFor="duration">
-          <Select value={duration} onValueChange={setDuration}>
-            <SelectTrigger id="duration" className="transition-all duration-200 hover:border-brand-200">
-              <SelectValue placeholder="Select duration" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="15" className="transition-colors duration-200">15 minutes</SelectItem>
-              <SelectItem value="30" className="transition-colors duration-200">30 minutes</SelectItem>
-              <SelectItem value="45" className="transition-colors duration-200">45 minutes</SelectItem>
-              <SelectItem value="60" className="transition-colors duration-200">60 minutes</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-
-        <VoiceSelection 
-          selectedVoice={selectedVoice}
-          onVoiceChange={setSelectedVoice}
-        />
-      </div>
+      <FormField label="Interview Duration" htmlFor="duration">
+        <Select value={duration} onValueChange={setDuration}>
+          <SelectTrigger id="duration" className="transition-all duration-200 hover:border-brand-200">
+            <SelectValue placeholder="Select duration" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="15" className="transition-colors duration-200">15 minutes</SelectItem>
+            <SelectItem value="30" className="transition-colors duration-200">30 minutes</SelectItem>
+            <SelectItem value="45" className="transition-colors duration-200">45 minutes</SelectItem>
+            <SelectItem value="60" className="transition-colors duration-200">60 minutes</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormField>
 
       <FormField label="Job Description" htmlFor="job-description">
         <Textarea
@@ -264,6 +261,8 @@ const InterviewForm = ({ initialInterviewType = "" }: InterviewFormProps) => {
         interviewers={interviewers}
         selectedInterviewer={interviewer}
         setInterviewer={setInterviewer}
+        selectedVoice={selectedVoice}
+        onVoiceChange={setSelectedVoice}
       />
 
       <div className="flex justify-end pt-4 animate-fade-in">
