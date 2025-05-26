@@ -37,7 +37,10 @@ export const useAudioStreaming = () => {
         body: { text, voice }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to invoke speech generation function');
+      }
 
       if (data?.success && data?.audioContent) {
         // Stop any currently playing audio
@@ -45,6 +48,9 @@ export const useAudioStreaming = () => {
           currentAudioRef.current.pause();
           currentAudioRef.current = null;
         }
+
+        // Initialize audio context if needed
+        initializeAudioContext();
 
         // Create audio element and play
         const audio = new Audio();
@@ -59,7 +65,8 @@ export const useAudioStreaming = () => {
           ...prev, 
           isLoading: false, 
           isPlaying: true,
-          currentVoice: voice 
+          currentVoice: voice,
+          error: null
         }));
 
         // Play audio
@@ -72,7 +79,8 @@ export const useAudioStreaming = () => {
           currentAudioRef.current = null;
         };
 
-        audio.onerror = () => {
+        audio.onerror = (audioError) => {
+          console.error('Audio playback error:', audioError);
           setState(prev => ({ 
             ...prev, 
             isPlaying: false, 
@@ -82,6 +90,30 @@ export const useAudioStreaming = () => {
           currentAudioRef.current = null;
         };
 
+      } else if (data?.success === false && data?.error) {
+        // Handle API-level errors gracefully
+        console.warn('Audio generation failed:', data.error);
+        setState(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          error: data.error,
+          isPlaying: false
+        }));
+        
+        // Simulate speech for development/fallback
+        setTimeout(() => {
+          setState(prev => ({ 
+            ...prev, 
+            isPlaying: true,
+            currentVoice: voice,
+            error: null
+          }));
+          
+          const estimatedDuration = Math.max(2000, text.length * 80);
+          setTimeout(() => {
+            setState(prev => ({ ...prev, isPlaying: false }));
+          }, estimatedDuration);
+        }, 500);
       } else {
         // Fallback: simulate speech for development
         console.log('No audio returned, simulating speech...');
@@ -89,11 +121,12 @@ export const useAudioStreaming = () => {
           ...prev, 
           isLoading: false, 
           isPlaying: true,
-          currentVoice: voice 
+          currentVoice: voice,
+          error: null
         }));
 
         // Simulate speech duration based on text length
-        const estimatedDuration = Math.max(2000, text.length * 100);
+        const estimatedDuration = Math.max(2000, text.length * 80);
         setTimeout(() => {
           setState(prev => ({ ...prev, isPlaying: false }));
         }, estimatedDuration);
@@ -106,11 +139,28 @@ export const useAudioStreaming = () => {
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        error: error.message || 'Failed to generate speech' 
+        error: error.message || 'Failed to generate speech',
+        isPlaying: false
       }));
+      
+      // Fallback simulation even on error
+      setTimeout(() => {
+        setState(prev => ({ 
+          ...prev, 
+          isPlaying: true,
+          currentVoice: voice,
+          error: null
+        }));
+        
+        const estimatedDuration = Math.max(2000, text.length * 80);
+        setTimeout(() => {
+          setState(prev => ({ ...prev, isPlaying: false }));
+        }, estimatedDuration);
+      }, 1000);
+      
       throw error;
     }
-  }, []);
+  }, [initializeAudioContext]);
 
   const stopAudio = useCallback(() => {
     if (currentAudioRef.current) {

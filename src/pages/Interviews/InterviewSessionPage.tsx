@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAudioStreaming } from "@/hooks/useAudioStreaming";
 import AudioVisualization from "@/components/AudioVisualization";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Mic, MicOff } from "lucide-react";
 import logo from "@/assets/images/logo.webp";
 
 const InterviewSessionPage = () => {
@@ -24,6 +25,7 @@ const InterviewSessionPage = () => {
     localStorage.getItem('interview-voice') || 'zephyr'
   );
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [textResponse, setTextResponse] = useState("");
 
   // Get interview configuration
   const [interviewConfig, setInterviewConfig] = useState<any>(null);
@@ -39,7 +41,7 @@ const InterviewSessionPage = () => {
     
     if (storedPrompt) {
       // Set initial question as introduction from the prompt
-      setQuestion("Hello! I'm excited to interview you today. Let me introduce myself and then I'd like you to tell me about yourself and your background.");
+      setQuestion("Hello! I'm excited to interview you today. Let me start by introducing myself and this interview process, and then I'd like you to tell me about yourself and your background.");
     } else {
       // Fallback if no stored prompt
       setQuestion("Hello! Welcome to your interview session. Please tell me about yourself and your experience.");
@@ -80,10 +82,19 @@ const InterviewSessionPage = () => {
 
   // Generate speech for new questions
   useEffect(() => {
-    if (isAudioEnabled && question && !isListening) {
-      generateSpeech(question, selectedVoice).catch(console.error);
+    if (isAudioEnabled && question && !isListening && !isPlaying) {
+      const generateQuestionSpeech = async () => {
+        try {
+          await generateSpeech(question, selectedVoice);
+        } catch (error) {
+          console.error('Failed to generate speech:', error);
+          // Continue with interview even if speech fails
+        }
+      };
+      
+      generateQuestionSpeech();
     }
-  }, [question, selectedVoice, isAudioEnabled, generateSpeech, isListening]);
+  }, [question, selectedVoice, isAudioEnabled, generateSpeech, isListening, isPlaying]);
 
   // Simulate microphone access
   const requestMicrophoneAccess = () => {
@@ -99,10 +110,10 @@ const InterviewSessionPage = () => {
       // Simulate interview progression with more realistic questions
       const questionTimers = [15000, 35000, 55000, 75000];
       const followUpQuestions = [
-        "That's great! Can you tell me about a challenging project you worked on recently?",
-        "How do you handle working under pressure or tight deadlines?",
-        "What interests you most about this role and our company?",
-        "Do you have any questions for me about the position or our team?"
+        "That's great! Can you tell me about a challenging project you worked on recently and how you overcame any obstacles?",
+        "How do you handle working under pressure or tight deadlines? Can you give me a specific example?",
+        "What interests you most about this role and our company? What do you know about our mission?",
+        "Do you have any questions for me about the position, our team, or the company culture?"
       ];
       
       questionTimers.forEach((delay, index) => {
@@ -132,6 +143,28 @@ const InterviewSessionPage = () => {
       stopAudio();
     }
     setIsAudioEnabled(!isAudioEnabled);
+  };
+
+  const toggleMicrophone = () => {
+    setIsListening(!isListening);
+    if (!isListening) {
+      toast({
+        title: "Microphone Activated",
+        description: "You can now speak your response.",
+      });
+    }
+  };
+
+  const handleTextSubmit = () => {
+    if (textResponse.trim()) {
+      // Simulate processing the text response
+      setTranscript(textResponse);
+      setTextResponse("");
+      toast({
+        title: "Response Recorded",
+        description: "Your text response has been recorded.",
+      });
+    }
   };
 
   return (
@@ -195,8 +228,8 @@ const InterviewSessionPage = () => {
                         <AudioVisualization isPlaying={isPlaying} voice={selectedVoice} />
                       )}
                       {error && (
-                        <div className="text-sm text-destructive">
-                          Audio error: {error}
+                        <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                          Audio temporarily unavailable: {error}
                         </div>
                       )}
                     </div>
@@ -215,11 +248,20 @@ const InterviewSessionPage = () => {
                       {transcript || "Listening to your response..."}
                     </p>
                   </div>
-                  <div className="text-center mb-4">
+                  <div className="text-center mb-4 flex items-center justify-center gap-4">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-brand-100 text-brand-800">
                       <span className="w-2 h-2 rounded-full bg-brand-500 mr-2 animate-pulse"></span>
                       Microphone active
                     </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleMicrophone}
+                      className="flex items-center gap-2"
+                    >
+                      <MicOff className="h-4 w-4" />
+                      Stop Recording
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -228,20 +270,29 @@ const InterviewSessionPage = () => {
                   <p className="text-muted-foreground mb-6 max-w-md">
                     Click the button below to enable your microphone and begin the interview session.
                   </p>
-                  <Button className="gradient-bg" size="lg" onClick={requestMicrophoneAccess}>
-                    Enable Microphone & Start
-                  </Button>
+                  <div className="flex gap-4">
+                    <Button className="gradient-bg" size="lg" onClick={requestMicrophoneAccess}>
+                      <Mic className="h-4 w-4 mr-2" />
+                      Enable Microphone & Start
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
             
-            <Textarea
-              placeholder="Type your response here (for technical questions or if voice isn't working)..."
-              className="min-h-[100px]"
-            />
-            
-            <div className="flex justify-end mt-4">
-              <Button>Submit Text Response</Button>
+            <div className="space-y-4">
+              <Textarea
+                placeholder="Type your response here (for technical questions or if voice isn't working)..."
+                className="min-h-[100px]"
+                value={textResponse}
+                onChange={(e) => setTextResponse(e.target.value)}
+              />
+              
+              <div className="flex justify-end">
+                <Button onClick={handleTextSubmit} disabled={!textResponse.trim()}>
+                  Submit Text Response
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Voice mapping for Gemini voices
+// Voice mapping for Gemini Live API voices
 const GEMINI_VOICES = {
   'zephyr': 'Puck',
   'charon': 'Charon', 
@@ -112,9 +112,9 @@ serve(async (req) => {
     
     console.log(`Generating speech for: "${text}" with voice: ${selectedVoice}`);
 
-    // Use the correct Gemini model for text-to-speech
+    // Use Gemini Live API with proper audio configuration
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -123,7 +123,7 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Please convert this text to speech: "${text}"`
+              text: text
             }]
           }],
           generationConfig: {
