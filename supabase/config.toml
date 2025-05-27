@@ -17,5 +17,5 @@ jwt_expiry = 3600
 refresh_token_rotation_enabled = true
 security_update_password_require_reauthentication = true
 
-[functions.gemini-speech-generation]
+[functions.gemini-live-speech]
 verify_jwt = false

@@ -23,7 +23,7 @@ const AudioVisualization = ({ isPlaying, voice = 'zephyr' }: AudioVisualizationP
       'kore': 'Kore',
       'zubenelgenubi': 'Aoede'
     };
-    return voiceMap[voiceId] || voiceId;
+    return voiceMap[voiceId as keyof typeof voiceMap] || voiceId;
   };
 
   if (!isPlaying) {
