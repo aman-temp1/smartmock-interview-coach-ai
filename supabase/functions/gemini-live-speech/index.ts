@@ -8,72 +8,11 @@ const corsHeaders = {
 
 // Voice mapping for Gemini Live API
 const GEMINI_LIVE_VOICES = {
-  'zephyr': 'Puck',
+  'zephyr': 'Zephyr',
   'charon': 'Charon', 
   'kore': 'Kore',
   'zubenelgenubi': 'Aoede'
 };
-
-interface WavHeader {
-  numChannels: number;
-  sampleRate: number;
-  bitsPerSample: number;
-}
-
-function createWavHeader(dataLength: number, options: WavHeader): Uint8Array {
-  const { numChannels, sampleRate, bitsPerSample } = options;
-  const byteRate = sampleRate * numChannels * bitsPerSample / 8;
-  const blockAlign = numChannels * bitsPerSample / 8;
-  const buffer = new ArrayBuffer(44);
-  const view = new DataView(buffer);
-
-  const writeString = (offset: number, string: string) => {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i));
-    }
-  };
-
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + dataLength, true);
-  writeString(8, 'WAVE');
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, bitsPerSample, true);
-  writeString(36, 'data');
-  view.setUint32(40, dataLength, true);
-
-  return new Uint8Array(buffer);
-}
-
-function convertPCMToWav(pcmChunks: Uint8Array[]): Uint8Array {
-  const options: WavHeader = {
-    numChannels: 1,
-    sampleRate: 24000, // Gemini Live API outputs at 24kHz
-    bitsPerSample: 16
-  };
-
-  // Combine all PCM chunks
-  const totalLength = pcmChunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const combinedPCM = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of pcmChunks) {
-    combinedPCM.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  // Create WAV file
-  const wavHeader = createWavHeader(combinedPCM.length, options);
-  const wavFile = new Uint8Array(wavHeader.length + combinedPCM.length);
-  wavFile.set(wavHeader, 0);
-  wavFile.set(combinedPCM, wavHeader.length);
-
-  return wavFile;
-}
 
 serve(async (req) => {
   const { headers } = req;
@@ -91,7 +30,7 @@ serve(async (req) => {
   const { socket, response } = Deno.upgradeWebSocket(req);
   
   let geminiSocket: WebSocket | null = null;
-  let audioChunks: Uint8Array[] = [];
+  let audioChunks: string[] = [];
 
   socket.onopen = () => {
     console.log('WebSocket client connected');
@@ -105,21 +44,21 @@ serve(async (req) => {
 
       if (message.type === 'generate_speech') {
         const { text, voice = 'zephyr' } = message;
-        const selectedVoice = GEMINI_LIVE_VOICES[voice] || 'Puck';
+        const selectedVoice = GEMINI_LIVE_VOICES[voice] || 'Zephyr';
         
         console.log(`Generating speech with Gemini Live API: "${text}" using voice: ${selectedVoice}`);
         
         // Reset audio chunks for new generation
         audioChunks = [];
 
-        // Connect to Gemini Live API
+        // Connect to Gemini Live API with correct URL format
         const geminiUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService/BidiGenerateContent?key=${geminiApiKey}`;
         geminiSocket = new WebSocket(geminiUrl);
 
         geminiSocket.onopen = () => {
           console.log('Connected to Gemini Live API');
           
-          // Send session setup
+          // Send correct setup message according to Live API docs
           const setupMessage = {
             setup: {
               model: "models/gemini-2.0-flash-live-001",
@@ -136,9 +75,10 @@ serve(async (req) => {
             }
           };
           
+          console.log('Sending setup message:', JSON.stringify(setupMessage));
           geminiSocket?.send(JSON.stringify(setupMessage));
           
-          // Send the text to generate speech
+          // Send the text content after setup
           setTimeout(() => {
             const clientContent = {
               client_content: {
@@ -149,57 +89,49 @@ serve(async (req) => {
                 turn_complete: true
               }
             };
+            console.log('Sending client content:', JSON.stringify(clientContent));
             geminiSocket?.send(JSON.stringify(clientContent));
-          }, 100);
+          }, 500);
         };
 
         geminiSocket.onmessage = (geminiEvent) => {
           try {
             const geminiData = JSON.parse(geminiEvent.data);
-            console.log('Gemini message type:', geminiData.server_content?.model_turn ? 'model_turn' : 'other');
+            console.log('Gemini response received, keys:', Object.keys(geminiData));
             
-            if (geminiData.server_content?.model_turn?.parts) {
-              for (const part of geminiData.server_content.model_turn.parts) {
-                if (part.inline_data?.mime_type?.startsWith('audio/') && part.inline_data.data) {
-                  // Convert base64 to binary
-                  const binaryString = atob(part.inline_data.data);
-                  const bytes = new Uint8Array(binaryString.length);
-                  for (let i = 0; i < binaryString.length; i++) {
-                    bytes[i] = binaryString.charCodeAt(i);
-                  }
-                  audioChunks.push(bytes);
+            // Handle setup confirmation
+            if (geminiData.setupComplete) {
+              console.log('Setup complete');
+              return;
+            }
+            
+            // Handle server content with audio data
+            if (geminiData.serverContent?.modelTurn?.parts) {
+              for (const part of geminiData.serverContent.modelTurn.parts) {
+                if (part.inlineData && part.inlineData.mimeType?.startsWith('audio/pcm') && part.inlineData.data) {
+                  console.log('Received audio chunk, size:', part.inlineData.data.length);
+                  audioChunks.push(part.inlineData.data);
                   
-                  // Send audio chunk immediately to client
+                  // Send audio chunk immediately to client for real-time playback
                   socket.send(JSON.stringify({
                     type: 'audio_chunk',
-                    data: part.inline_data.data,
-                    mimeType: part.inline_data.mime_type
+                    data: part.inlineData.data,
+                    mimeType: part.inlineData.mimeType
                   }));
                 }
               }
             }
             
             // Check if generation is complete
-            if (geminiData.server_content?.turn_complete || geminiData.server_content?.model_turn) {
-              console.log('Generation complete, processing final audio');
+            if (geminiData.serverContent?.turnComplete || 
+                (geminiData.serverContent?.modelTurn && audioChunks.length > 0)) {
+              console.log('Generation complete, total audio chunks:', audioChunks.length);
               
-              if (audioChunks.length > 0) {
-                // Convert all chunks to WAV
-                const wavData = convertPCMToWav(audioChunks);
-                const base64Audio = btoa(String.fromCharCode(...wavData));
-                
-                socket.send(JSON.stringify({
-                  type: 'speech_complete',
-                  audioContent: base64Audio,
-                  success: true
-                }));
-              } else {
-                socket.send(JSON.stringify({
-                  type: 'speech_complete',
-                  success: false,
-                  error: 'No audio generated'
-                }));
-              }
+              socket.send(JSON.stringify({
+                type: 'speech_complete',
+                success: true,
+                audioChunks: audioChunks.length
+              }));
               
               geminiSocket?.close();
             }
@@ -207,7 +139,7 @@ serve(async (req) => {
             console.error('Error processing Gemini message:', error);
             socket.send(JSON.stringify({
               type: 'error',
-              error: 'Failed to process audio response'
+              error: 'Failed to process audio response: ' + error.message
             }));
           }
         };
@@ -220,8 +152,14 @@ serve(async (req) => {
           }));
         };
 
-        geminiSocket.onclose = () => {
-          console.log('Gemini WebSocket closed');
+        geminiSocket.onclose = (event) => {
+          console.log('Gemini WebSocket closed, code:', event.code, 'reason:', event.reason);
+          if (event.code !== 1000 && audioChunks.length === 0) {
+            socket.send(JSON.stringify({
+              type: 'error',
+              error: `Connection closed unexpectedly: ${event.reason || 'Unknown reason'}`
+            }));
+          }
         };
 
       }
