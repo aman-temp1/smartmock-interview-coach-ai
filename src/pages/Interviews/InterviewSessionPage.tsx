@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAudioStreaming } from "@/hooks/useAudioStreaming";
 import AudioVisualization from "@/components/AudioVisualization";
-import { Volume2, VolumeX, Mic, MicOff } from "lucide-react";
+import { Volume2, VolumeX, Mic, MicOff, Wifi, WifiOff } from "lucide-react";
 import logo from "@/assets/images/logo.webp";
 
 const InterviewSessionPage = () => {
@@ -19,8 +18,16 @@ const InterviewSessionPage = () => {
   const [timer, setTimer] = useState(30 * 60); // 30 minutes in seconds
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   
-  // Audio streaming
-  const { isPlaying, isLoading, error, generateSpeech, stopAudio } = useAudioStreaming();
+  // Audio streaming with enhanced state
+  const { 
+    isPlaying, 
+    isLoading, 
+    isConnecting, 
+    error, 
+    generateSpeech, 
+    stopAudio 
+  } = useAudioStreaming();
+  
   const [selectedVoice, setSelectedVoice] = useState(() => 
     localStorage.getItem('interview-voice') || 'zephyr'
   );
@@ -80,21 +87,25 @@ const InterviewSessionPage = () => {
     return () => clearInterval(interval);
   }, [timer, toast, navigate]);
 
-  // Generate speech for new questions
+  // Generate speech for new questions with enhanced feedback
   useEffect(() => {
-    if (isAudioEnabled && question && !isListening && !isPlaying) {
+    if (isAudioEnabled && question && !isListening && !isPlaying && !isConnecting) {
       const generateQuestionSpeech = async () => {
         try {
           await generateSpeech(question, selectedVoice);
         } catch (error) {
           console.error('Failed to generate speech:', error);
-          // Continue with interview even if speech fails
+          toast({
+            title: "Audio Generation Failed",
+            description: "Continuing with text-only mode. Audio will be simulated.",
+            variant: "destructive",
+          });
         }
       };
       
       generateQuestionSpeech();
     }
-  }, [question, selectedVoice, isAudioEnabled, generateSpeech, isListening, isPlaying]);
+  }, [question, selectedVoice, isAudioEnabled, generateSpeech, isListening, isPlaying, isConnecting, toast]);
 
   // Simulate microphone access
   const requestMicrophoneAccess = () => {
@@ -139,7 +150,7 @@ const InterviewSessionPage = () => {
   };
 
   const toggleAudio = () => {
-    if (isAudioEnabled && isPlaying) {
+    if (isAudioEnabled && (isPlaying || isConnecting)) {
       stopAudio();
     }
     setIsAudioEnabled(!isAudioEnabled);
@@ -167,6 +178,20 @@ const InterviewSessionPage = () => {
     }
   };
 
+  // Enhanced audio status indicator
+  const getAudioStatusIcon = () => {
+    if (isConnecting) return <Wifi className="h-4 w-4 animate-pulse" />;
+    if (isAudioEnabled) return <Volume2 className="h-4 w-4" />;
+    return <VolumeX className="h-4 w-4" />;
+  };
+
+  const getAudioStatusText = () => {
+    if (isConnecting) return 'Connecting...';
+    if (isLoading) return 'Generating...';
+    if (isAudioEnabled) return 'Audio On';
+    return 'Audio Off';
+  };
+
   return (
     <div className="flex flex-col h-screen bg-muted/30">
       <div className="bg-background p-4 border-b border-border flex items-center justify-between">
@@ -190,8 +215,8 @@ const InterviewSessionPage = () => {
             onClick={toggleAudio}
             className="flex items-center gap-2"
           >
-            {isAudioEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            {isAudioEnabled ? 'Audio On' : 'Audio Off'}
+            {getAudioStatusIcon()}
+            {getAudioStatusText()}
           </Button>
           <div className="bg-background border border-border rounded-md px-3 py-1">
             <span className="text-sm font-medium">{formatTime(timer)}</span>
@@ -211,25 +236,34 @@ const InterviewSessionPage = () => {
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
-                  <div><img src={logo} alt="Company Logo" className="h-full w-full" /></div>
+                  <img src={logo} alt="Company Logo" className="h-full w-full" />
                 </div>
                 <div className="flex-1">
                   <p className="text-lg font-medium mb-2">{question}</p>
                   
                   {isAudioEnabled && (
                     <div className="mt-3">
-                      {isLoading && (
+                      {isConnecting && (
+                        <div className="flex items-center space-x-2">
+                          <Wifi className="h-4 w-4 animate-pulse text-brand-500" />
+                          <span className="text-sm text-muted-foreground">Connecting to speech service...</span>
+                        </div>
+                      )}
+                      {isLoading && !isConnecting && (
                         <div className="flex items-center space-x-2">
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500"></div>
                           <span className="text-sm text-muted-foreground">Generating speech...</span>
                         </div>
                       )}
-                      {!isLoading && (
+                      {!isLoading && !isConnecting && (
                         <AudioVisualization isPlaying={isPlaying} voice={selectedVoice} />
                       )}
                       {error && (
-                        <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
-                          Audio temporarily unavailable: {error}
+                        <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded mt-2">
+                          <div className="flex items-center gap-2">
+                            <WifiOff className="h-4 w-4" />
+                            <span>Audio streaming: {error}</span>
+                          </div>
                         </div>
                       )}
                     </div>
